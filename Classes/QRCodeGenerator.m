@@ -61,7 +61,7 @@
 	}
 	
 	// generate QR
-	QRcode *code = QRcode_encodeString([string UTF8String], 0, QR_ECLEVEL_L, QR_MODE_8, 1);
+	QRcode *code = QRcode_encodeString([string UTF8String], 0, QR_ECLEVEL_H, QR_MODE_8, 1);
 	if (!code) {
 		return nil;
 	}
