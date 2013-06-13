@@ -24,9 +24,14 @@
 #import "QRCodeGenerator.h"
 #import "qrencode.h"
 
+@interface QRCodeGenerator()
+
+@property (nonatomic, strong) UIColor *qrColor;
+@end
+
 @implementation QRCodeGenerator
 
-+ (void)drawQRCode:(QRcode *)code context:(CGContextRef)ctx size:(CGFloat)size {
++ (void)drawQRCode:(QRcode *)code context:(CGContextRef)ctx size:(CGFloat)size color:(UIColor*)color{
 	int margin = 0;
 	unsigned char *data = code->data;
 	int width = code->width;
@@ -42,7 +47,7 @@
 	
 	CGRect rectDraw = CGRectMake(0.0f, 0.0f, pixelSize, pixelSize);
 	// draw
-	CGContextSetFillColor(ctx, CGColorGetComponents([UIColor blackColor].CGColor));
+	CGContextSetFillColor(ctx, CGColorGetComponents(color.CGColor));
 	for(int i = 0; i < width; ++i) {
 		for(int j = 0; j < width; ++j) {
 			if(*data & 1) {
@@ -54,33 +59,37 @@
 	}
 	CGContextFillPath(ctx);
 }
-
 + (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)size {
-	if (![string length]) {
+	return [QRCodeGenerator qrImageForString:string imageSize:size codeColor:nil];
+}
++ (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)imageSize codeColor:(UIColor*)color{
+    if (![string length]) {
 		return nil;
 	}
-	
+	if (color == nil) {
+        color = [UIColor blackColor];
+    }
 	// generate QR
 	QRcode *code = QRcode_encodeString([string UTF8String], 0, QR_ECLEVEL_H, QR_MODE_8, 1);
 	if (!code) {
 		return nil;
 	}
 	
-	if (code->width > size) {
+	if (code->width > imageSize) {
 		printf("Image size is less than qr code size (%d)\n", code->width);
 		return nil;
 	}
 	
 	// create context
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	CGContextRef ctx = CGBitmapContextCreate(0, size, size, 8, size * 4, colorSpace, kCGImageAlphaPremultipliedLast);
+	CGContextRef ctx = CGBitmapContextCreate(0, imageSize, imageSize, 8, imageSize * 4, colorSpace, kCGImageAlphaPremultipliedLast);
 	
-	CGAffineTransform translateTransform = CGAffineTransformMakeTranslation(0, -size);
+	CGAffineTransform translateTransform = CGAffineTransformMakeTranslation(0, -imageSize);
 	CGAffineTransform scaleTransform = CGAffineTransformMakeScale(1, -1);
 	CGContextConcatCTM(ctx, CGAffineTransformConcat(translateTransform, scaleTransform));
 	
-	// draw QR on this context	
-	[QRCodeGenerator drawQRCode:code context:ctx size:size];
+	// draw QR on this context
+	[QRCodeGenerator drawQRCode:code context:ctx size:imageSize color:color];
 	
 	// get image
 	CGImageRef qrCGImage = CGBitmapContextCreateImage(ctx);
@@ -94,5 +103,4 @@
 	
 	return qrImage;
 }
-
 @end

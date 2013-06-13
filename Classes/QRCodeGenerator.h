@@ -25,6 +25,7 @@
 
 @interface QRCodeGenerator : NSObject
 
+
 /**
  Returns an image which contains a QR code for a set string.
  When the image is generated, the code is mapped in pixels without distorting the image. 
@@ -32,5 +33,5 @@
  this depends on the 'imageSize' parameter and size of the generated QR
  */
 + (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)imageSize;
-
++ (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)imageSize codeColor:(UIColor*)color;
 @end
