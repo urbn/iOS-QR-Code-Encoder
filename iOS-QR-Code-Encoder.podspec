@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "iOS-QR-Code-Encoder"
-  s.version      = "0.0.2"
+  s.version      = "0.0.2.1"
   s.summary      = "iOS QR encoder, generates an UIImage from NSString with one line of code. Uses libqrencode to encode a string into qr."
   s.homepage     = "http://cocoacontrols.com/platforms/ios/controls/ios-qr-encoder"
   s.license      = 'MIT'
