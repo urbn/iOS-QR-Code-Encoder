@@ -24,6 +24,12 @@
 #import "QRCodeGenerator.h"
 #import "qrencode.h"
 
+const NSInteger kMinContrastRatio = 4;
+const CGFloat kRedLuminance = .2126f;
+const CGFloat kGreenLuminance = .7152f;
+const CGFloat kBlueLuminance = .0722f;
+const CGFloat kLuminanceConstant = .03928f;
+
 @interface QRCodeGenerator()
 
 @property (nonatomic, strong) UIColor *qrColor;
@@ -31,6 +37,57 @@
 
 @implementation QRCodeGenerator
 
++ (BOOL)CanUseForegroundColor:(UIColor*)foreground andBackgroundColor:(UIColor*)background{
+    CGFloat color1 = [QRCodeGenerator luminanceForColor:foreground];
+    CGFloat color2 = [QRCodeGenerator luminanceForColor:background];
+    CGFloat ratio;
+    if (color1 < color2) {
+        ratio = (color2 + .05)/(color1 + .05);
+    }else{
+        ratio = (color1 + .05)/(color2 + .05);
+    }
+    NSLog(@"ratio %f", ratio);
+    if (ratio > 4) {
+        return YES;
+    }
+    
+    return NO;
+}
++(CGFloat)luminanceForColor:(UIColor*)color{
+    CGFloat r, g, b, a;
+    if ([color respondsToSelector:@selector(getRed:green:blue:alpha:)]) {
+        [color getRed:&r green:&g blue:&b alpha:&a];
+    }
+    NSLog(@"red %f", r);
+    NSLog(@"green %f", g);
+    NSLog(@" blue %f", b);
+    
+    NSArray *rgb = @[[NSNumber numberWithFloat:r], [NSNumber numberWithFloat:g], [NSNumber numberWithFloat:b]];
+    for (NSNumber *num in rgb) {
+        
+        if (num.floatValue <= kLuminanceConstant) {
+            num = [NSNumber numberWithFloat:num.floatValue/12.92];
+        }else{
+            CGFloat afloat = num.floatValue;
+            afloat = (afloat + .055)/1.055;
+            afloat = powf(afloat, 2.4);
+            num = [NSNumber numberWithFloat:afloat];
+            NSLog(@"%f", num.floatValue);
+        }
+    }
+    NSNumber *red = [rgb objectAtIndex:0];
+    NSNumber *green = [rgb objectAtIndex:1];
+    NSNumber *blue = [rgb objectAtIndex:2];
+    NSLog(@"red %f", red.floatValue);
+    NSLog(@"green %f", green.floatValue);
+    NSLog(@"blue %f", blue.floatValue);
+    NSLog(@"r multiplied %f", red.floatValue * kRedLuminance);
+    NSLog(@"g multiplied %f", green.floatValue * kGreenLuminance);
+    NSLog(@"b multiplied %f", blue.floatValue * kBlueLuminance);
+    CGFloat luminance = ((red.floatValue * kRedLuminance) + (green.floatValue * kGreenLuminance) + (blue.floatValue * kBlueLuminance));
+    NSLog(@"Luminance %f", luminance);
+    return luminance;
+}
 + (void)drawQRCode:(QRcode *)code context:(CGContextRef)ctx size:(CGFloat)size color:(UIColor*)color{
 	int margin = 0;
 	unsigned char *data = code->data;
@@ -38,7 +95,6 @@
 	int totalWidth = width + margin * 2;
 	int imageSize = (int)floorf(size);	
 	
-	// @todo - review float->int stuff
 	int pixelSize = imageSize / totalWidth;
 	if (imageSize % totalWidth) {
 		pixelSize = imageSize / width;
@@ -46,7 +102,6 @@
 	}
 	
 	CGRect rectDraw = CGRectMake(0.0f, 0.0f, pixelSize, pixelSize);
-	// draw
 	CGContextSetFillColorWithColor(ctx, color.CGColor);
 	for(int i = 0; i < width; ++i) {
 		for(int j = 0; j < width; ++j) {
@@ -79,7 +134,6 @@
 		printf("Image size is less than qr code size (%d)\n", code->width);
 		return nil;
 	}
-	
 	// create context
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(0, imageSize, imageSize, 8, imageSize * 4, colorSpace, kCGImageAlphaPremultipliedLast);

@@ -32,6 +32,7 @@
  So the image can both contain and not contain the margins, 
  this depends on the 'imageSize' parameter and size of the generated QR
  */
++ (BOOL)CanUseForegroundColor:(UIColor*)foreground andBackgroundColor:(UIColor*)background;
 + (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)imageSize;
 + (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)imageSize codeColor:(UIColor*)color;
 @end
