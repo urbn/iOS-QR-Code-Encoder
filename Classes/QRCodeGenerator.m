@@ -106,7 +106,7 @@ const CGFloat kLuminanceConstant = .03928f;
     }else{
         ratio = color2/color1;
     }
-    if (ratio > .5) {
+    if (ratio <= .55) {
         return YES;
     }
     
