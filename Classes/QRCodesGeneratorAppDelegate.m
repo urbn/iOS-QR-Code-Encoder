@@ -34,9 +34,11 @@
 	// sample
 	self.window.rootViewController = [[[UIViewController alloc] init] autorelease];
 	UIImageView *imageView = [[[UIImageView alloc] initWithFrame:CGRectMake(40.0f, 40.0f, 240.0f, 240.0f)] autorelease];
-	imageView.backgroundColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
-	imageView.image = [QRCodeGenerator qrImageForString:@"01234567890123456789" imageSize:imageView.bounds.size.width codeColor:[UIColor colorWithRed:255.0/255.0f green:128.0/255.0f blue:0.0/255.0f alpha:1.0]];
+    UIColor *background = [UIColor colorWithRed:200/255.0 green:200/255.0 blue:200/255.0 alpha:1];
+    UIColor *codeColor = [UIColor colorWithRed:255.0/255.0f green:128.0/255.0f blue:0.0/255.0f alpha:1.0];
     
+	imageView.backgroundColor = background;
+	imageView.image = [QRCodeGenerator qrImageForString:@"01234567890123456789" imageSize:imageView.bounds.size.width codeColor:codeColor];
 	[self.window.rootViewController.view addSubview:imageView];
     [self.window makeKeyAndVisible];
     return YES;

@@ -41,40 +41,32 @@ const CGFloat kLuminanceConstant = .03928f;
 
 @implementation QRCodeGenerator
 
-+ (BOOL)CanUseForegroundColor:(UIColor*)foreground andBackgroundColor:(UIColor*)background{
-    CGFloat color1 = [QRCodeGenerator luminanceForColor:foreground];
-    CGFloat color2 = [QRCodeGenerator luminanceForColor:background];
-    CGFloat ratio;
-    if (color1 < color2) {
-        ratio = (color2 + .05)/(color1 + .05);
+
+#pragma 
+#pragma mark - Helper Methods
++(CGFloat)decodeColorValue:(CGFloat)value{
+    if (value <= kLuminanceConstant) {
+        value = value/12.92;
     }else{
-        ratio = (color1 + .05)/(color2 + .05);
+        value = (value + .055)/1.055;
+        value = powf(value, 2.4);
     }
-    if (ratio > 4) {
-        return YES;
+    return value;
+}
++(NSArray *)decodedRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue{
+    NSMutableArray *morphed = [NSMutableArray arrayWithCapacity:3];
+    NSArray *rgb = @[[NSNumber numberWithFloat:red], [NSNumber numberWithFloat:green], [NSNumber numberWithFloat:blue]];
+    for (NSNumber *num in rgb) {
+        [morphed addObject:[NSNumber numberWithFloat:[QRCodeGenerator decodeColorValue:num.floatValue]]];
     }
-    
-    return NO;
+    return morphed;
 }
 +(CGFloat)luminanceForColor:(UIColor*)color{
     CGFloat r, g, b, a;
     if ([color respondsToSelector:@selector(getRed:green:blue:alpha:)]) {
         [color getRed:&r green:&g blue:&b alpha:&a];
     }
-    NSMutableArray *morphed = [NSMutableArray arrayWithCapacity:3];
-    NSArray *rgb = @[[NSNumber numberWithFloat:r], [NSNumber numberWithFloat:g], [NSNumber numberWithFloat:b]];
-    for (NSNumber *num in rgb) {
-        if (num.floatValue <= kLuminanceConstant) {
-            num = [NSNumber numberWithFloat:num.floatValue/12.92];
-            [morphed addObject:num];
-        }else{
-            CGFloat afloat = num.floatValue;
-            afloat = (afloat + .055)/1.055;
-            afloat = powf(afloat, 2.4);
-            num = [NSNumber numberWithFloat:afloat];
-            [morphed addObject:num];
-        }
-    }
+    NSArray *morphed = [QRCodeGenerator decodedRed:r green:g blue:b];
     NSNumber *red = [morphed objectAtIndex:0];
     NSNumber *green = [morphed objectAtIndex:1];
     NSNumber *blue = [morphed objectAtIndex:2];
@@ -100,6 +92,25 @@ const CGFloat kLuminanceConstant = .03928f;
 		}
 	}
 	CGContextFillPath(ctx);
+}
+
+#pragma 
+#pragma mark - Class Methods
++ (BOOL)CanUseForegroundColor:(UIColor*)foreground andBackgroundColor:(UIColor*)background{
+    CGFloat color1 = [QRCodeGenerator luminanceForColor:foreground];
+    CGFloat color2 = [QRCodeGenerator luminanceForColor:background];
+    CGFloat ratio;
+    
+    if (color1 < color2) {
+        ratio = color1/color2;
+    }else{
+        ratio = color2/color1;
+    }
+    if (ratio > .5) {
+        return YES;
+    }
+    
+    return NO;
 }
 + (UIImage *)qrImageForString:(NSString *)string imageSize:(CGFloat)size {
 	return [QRCodeGenerator qrImageForString:string imageSize:size codeColor:nil];
