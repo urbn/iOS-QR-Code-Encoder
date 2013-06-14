@@ -24,6 +24,10 @@
 #import "QRCodeGenerator.h"
 #import "qrencode.h"
 
+enum {
+	qr_margin = 1
+};
+
 const NSInteger kMinContrastRatio = 4;
 const CGFloat kRedLuminance = .2126f;
 const CGFloat kGreenLuminance = .7152f;
@@ -46,7 +50,6 @@ const CGFloat kLuminanceConstant = .03928f;
     }else{
         ratio = (color1 + .05)/(color2 + .05);
     }
-    NSLog(@"ratio %f", ratio);
     if (ratio > 4) {
         return YES;
     }
@@ -58,55 +61,39 @@ const CGFloat kLuminanceConstant = .03928f;
     if ([color respondsToSelector:@selector(getRed:green:blue:alpha:)]) {
         [color getRed:&r green:&g blue:&b alpha:&a];
     }
-    NSLog(@"red %f", r);
-    NSLog(@"green %f", g);
-    NSLog(@" blue %f", b);
-    
+    NSMutableArray *morphed = [NSMutableArray arrayWithCapacity:3];
     NSArray *rgb = @[[NSNumber numberWithFloat:r], [NSNumber numberWithFloat:g], [NSNumber numberWithFloat:b]];
     for (NSNumber *num in rgb) {
-        
         if (num.floatValue <= kLuminanceConstant) {
             num = [NSNumber numberWithFloat:num.floatValue/12.92];
+            [morphed addObject:num];
         }else{
             CGFloat afloat = num.floatValue;
             afloat = (afloat + .055)/1.055;
             afloat = powf(afloat, 2.4);
             num = [NSNumber numberWithFloat:afloat];
-            NSLog(@"%f", num.floatValue);
+            [morphed addObject:num];
         }
     }
-    NSNumber *red = [rgb objectAtIndex:0];
-    NSNumber *green = [rgb objectAtIndex:1];
-    NSNumber *blue = [rgb objectAtIndex:2];
-    NSLog(@"red %f", red.floatValue);
-    NSLog(@"green %f", green.floatValue);
-    NSLog(@"blue %f", blue.floatValue);
-    NSLog(@"r multiplied %f", red.floatValue * kRedLuminance);
-    NSLog(@"g multiplied %f", green.floatValue * kGreenLuminance);
-    NSLog(@"b multiplied %f", blue.floatValue * kBlueLuminance);
+    NSNumber *red = [morphed objectAtIndex:0];
+    NSNumber *green = [morphed objectAtIndex:1];
+    NSNumber *blue = [morphed objectAtIndex:2];
     CGFloat luminance = ((red.floatValue * kRedLuminance) + (green.floatValue * kGreenLuminance) + (blue.floatValue * kBlueLuminance));
-    NSLog(@"Luminance %f", luminance);
     return luminance;
 }
 + (void)drawQRCode:(QRcode *)code context:(CGContextRef)ctx size:(CGFloat)size color:(UIColor*)color{
-	int margin = 0;
-	unsigned char *data = code->data;
-	int width = code->width;
-	int totalWidth = width + margin * 2;
-	int imageSize = (int)floorf(size);	
+	unsigned char *data = 0;
+	int width;
+	data = code->data;
+	width = code->width;
+	float zoom = (double)size / (code->width + 2.0 * qr_margin);
+	CGRect rectDraw = CGRectMake(0, 0, zoom, zoom);
 	
-	int pixelSize = imageSize / totalWidth;
-	if (imageSize % totalWidth) {
-		pixelSize = imageSize / width;
-		margin = (imageSize - width * pixelSize) / 2;
-	}
-	
-	CGRect rectDraw = CGRectMake(0.0f, 0.0f, pixelSize, pixelSize);
 	CGContextSetFillColorWithColor(ctx, color.CGColor);
 	for(int i = 0; i < width; ++i) {
 		for(int j = 0; j < width; ++j) {
 			if(*data & 1) {
-				rectDraw.origin = CGPointMake(margin + j * pixelSize, margin + i * pixelSize);
+				rectDraw.origin = CGPointMake((j + qr_margin) * zoom,(i + qr_margin) * zoom);
 				CGContextAddRect(ctx, rectDraw);
 			}
 			++data;
