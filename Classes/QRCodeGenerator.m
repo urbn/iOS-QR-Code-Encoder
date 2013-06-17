@@ -44,6 +44,8 @@ const CGFloat kLuminanceConstant = .03928f;
 
 #pragma 
 #pragma mark - Helper Methods
+
+// for more info on QR code best practice see http://www.viu.ca/communications/docs/QR-Code-Best-Practices.pdf 
 +(CGFloat)decodeColorValue:(CGFloat)value{
     if (value <= kLuminanceConstant) {
         value = value/12.92;
@@ -106,7 +108,7 @@ const CGFloat kLuminanceConstant = .03928f;
     }else{
         ratio = color2/color1;
     }
-    if (ratio <= .55) {
+    if (ratio <= .40) {
         return YES;
     }
     
